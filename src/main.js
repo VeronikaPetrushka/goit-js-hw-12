@@ -11,11 +11,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const submitBtn = document.querySelector('.submit-btn');
   const gallery = document.getElementById('gallery');
   const loading = document.querySelector('.loading');
+  const loadMoreBtn = document.getElementById('load-more-btn');
+
+  let searchQuery = '';
+  let page = 1;
 
   searchForm.addEventListener('submit', async e => {
     e.preventDefault();
 
-    const searchQuery = searchBar.value.trim();
+    searchQuery = searchBar.value.trim();
+    page = 1;
 
     if (!searchQuery) {
       iziToast.error({
@@ -26,9 +31,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     loading.style.display = 'block';
+    gallery.innerHTML = '';
+    loadMoreBtn.style.display = 'none';
 
     const apiKey = '42199698-86ec1f577e997e517f326ea6b';
-    const url = `https://pixabay.com/api/?key=${apiKey}&q=${searchQuery}&image_type=photo&orientation=horizontal&safesearch=true&page=${page}&per_page=${limit}`;
+    const url = `https://pixabay.com/api/?key=${apiKey}&q=${searchQuery}&image_type=photo&orientation=horizontal&safesearch=true&page=${page}&per_page=15`;
 
     try {
       const response = await axios.get(url);
@@ -64,50 +71,59 @@ document.addEventListener('DOMContentLoaded', () => {
           gallery.appendChild(card);
         });
 
-        const lightbox = new SimpleLightbox('#gallery a', {
-          captions: true,
-          captionsData: 'alt',
-          captionDelay: 250,
-          captionPosition: 'bottom',
-          history: false,
-          animationSpeed: 250,
-          close: true,
-        });
-        lightbox.refresh();
+        if (data.totalHits > 15) {
+          loadMoreBtn.style.display = 'block';
+        }
       }
     } catch (error) {
       console.error('Error:', error);
     }
   });
-});
 
-const fetchPostsBtn = document.querySelector('.content-btn');
+  loadMoreBtn.addEventListener('click', async () => {
+    page++;
 
-// Controls the group number
-let page = 1;
-// Controls the number of items in the group
-let limit = 15;
-// In our case total number of pages is calculated on frontend
-const totalPages = Math.ceil(110 / limit);
+    const apiKey = '42199698-86ec1f577e997e517f326ea6b';
+    const url = `https://pixabay.com/api/?key=${apiKey}&q=${searchQuery}&image_type=photo&orientation=horizontal&safesearch=true&page=${page}&per_page=15`;
 
-contentBtn.addEventListener('click', async () => {
-  // Check the end of the collection to display an alert
-  if (page > totalPages) {
-    return iziToast.error({
-      message: "We're sorry, there are no more posts to load",
-    });
-  }
+    try {
+      const response = await axios.get(url);
+      const data = response.data;
 
-  try {
-    const posts = await addContent();
-    // Increase the group number
-    page += 1;
+      if (data.hits.length === 0) {
+        loadMoreBtn.style.display = 'none';
+        iziToast.info({
+          title: 'Info',
+          message: "We're sorry, but you've reached the end of search results.",
+        });
+      } else {
+        data.hits.forEach(image => {
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.innerHTML = `
+          <a href="${image.largeImageURL}" data-lightbox="gallery">
+            <img src="${image.webformatURL}" alt="${image.tags}"/>
+          </a>
+          <div class="card-info">
+            <h3 class="img-desc">${image.tags}</h3>
+            <div class="img-info">
+              <p class="img-stat">Likes:<br>${image.likes}</p>
+              <p class="img-stat">Views:<br>${image.views}</p>
+              <p class="img-stat">Comments:<br>${image.comments}</p>
+              <p class="img-stat">Downloads:<br>${image.downloads}</p>
+            </div>
+          </div>
+        `;
+          gallery.appendChild(card);
+        });
 
-    // Replace button text after first request
-    if (page > 1) {
-      contentBtn.textContent = 'Load more';
+        const cardHeight = document
+          .querySelector('.card')
+          .getBoundingClientRect().height;
+        window.scrollBy(0, cardHeight * 2);
+      }
+    } catch (error) {
+      console.error('Error:', error);
     }
-  } catch (error) {
-    console.log(error);
-  }
+  });
 });
