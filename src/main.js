@@ -71,6 +71,17 @@ document.addEventListener('DOMContentLoaded', () => {
           gallery.appendChild(card);
         });
 
+        const lightbox = new SimpleLightbox('#gallery a', {
+          captions: true,
+          captionsData: 'alt',
+          captionDelay: 250,
+          captionPosition: 'bottom',
+          history: false,
+          animationSpeed: 250,
+          close: true,
+        });
+        lightbox.refresh();
+
         if (data.totalHits > 15) {
           loadMoreBtn.style.display = 'block';
         }
@@ -116,6 +127,17 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
           gallery.appendChild(card);
         });
+
+        const lightbox = new SimpleLightbox('#gallery a', {
+          captions: true,
+          captionsData: 'alt',
+          captionDelay: 250,
+          captionPosition: 'bottom',
+          history: false,
+          animationSpeed: 250,
+          close: true,
+        });
+        lightbox.refresh();
 
         const cardHeight = document
           .querySelector('.card')
